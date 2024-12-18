@@ -1,16 +1,13 @@
 package com.grit.frontend.controller;
 
-import com.grit.frontend.model.Task;
+import com.grit.backend.controller.TaskController;
+import com.grit.backend.model.Task;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
+
+import java.util.List;
 
 public class ToDoController {
 
@@ -26,15 +23,16 @@ public class ToDoController {
     @FXML
     private TextField descriptionField;
     @FXML
-    private CheckBox checkBox; // This must match the fx:id in the FXML
+    private CheckBox checkBox;
     @FXML
     private Button saveButton;
 
-    private ObservableList<Task> taskList;
+    private TaskController taskController;
     private Task selectedTask;
 
     public ToDoController() {
-        taskList = FXCollections.observableArrayList();
+        // Initialize TaskController from backend
+        taskController = new TaskController();
     }
 
     @FXML
@@ -42,26 +40,38 @@ public class ToDoController {
         // Initialize columns
         idColumn.setCellValueFactory(cellData -> cellData.getValue().idProperty().asObject());
         descriptionColumn.setCellValueFactory(cellData -> cellData.getValue().descriptionProperty());
-        completedColumn.setCellValueFactory(cellData -> cellData.getValue().completedProperty());
+        completedColumn.setCellValueFactory(cellData -> cellData.getValue().completedProperty().asObject());
 
-        // Add demo data
-        taskList.add(new Task(1, "Finish JavaFX tutorial", true));
-        taskList.add(new Task(2, "Buy groceries", false));
-        taskList.add(new Task(3, "Clean the house", true));
+        // Load data from the backend
+        loadTasksFromBackend();
 
-        // Set demo data to the table view
-        taskTableView.setItems(taskList);
+        // Add demo data if the backend is empty
+        if (taskController.getAllTasks().isEmpty()) {
+            addDemoData();
+        }
 
-        // Listen for selection in the table
+        // Add selection listener for TableView
         taskTableView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
                 selectedTask = newValue;
-                // Clear the details when a new task is selected
-                descriptionField.clear();
-                checkBox.setSelected(false);
-                saveButton.setVisible(false); // Hide the Save button until Edit is clicked
+                descriptionField.setText(selectedTask.getDescription());
+                checkBox.setSelected(selectedTask.isCompleted());
+                saveButton.setVisible(false);
             }
         });
+    }
+
+    private void loadTasksFromBackend() {
+        List<Task> tasks = taskController.getAllTasks(); // Get tasks from backend
+        taskTableView.setItems(FXCollections.observableArrayList(tasks)); // Load tasks into TableView
+    }
+
+    private void addDemoData() {
+        // Adding demo tasks directly to the backend (mock behavior)
+        taskController.createTask("Finish JavaFX tutorial", false);
+        taskController.createTask("Buy groceries", false);
+        taskController.createTask("Clean the house", true);
+        loadTasksFromBackend(); // Reload tasks after adding demo data
     }
 
     @FXML
@@ -69,67 +79,67 @@ public class ToDoController {
         String description = descriptionField.getText();
         boolean isCompleted = checkBox.isSelected();
 
-        // Check if description is not empty
         if (description == null || description.trim().isEmpty()) {
-            showAlert(AlertType.ERROR, "Description cannot be empty.");
+            showAlert(Alert.AlertType.ERROR, "Description cannot be empty.");
             return;
         }
 
-        Task newTask = new Task(taskList.size() + 1, description, isCompleted);
-        taskList.add(newTask);
-        taskTableView.setItems(taskList);
+        // Add task via backend and reload tasks
+        taskController.createTask(description, isCompleted);
+        loadTasksFromBackend();
+
         descriptionField.clear();
-        checkBox.setSelected(false); // Reset checkbox
+        checkBox.setSelected(false);
     }
 
     @FXML
     public void handleEditTask() {
         if (selectedTask == null) {
-            showAlert(AlertType.WARNING, "Please select a task to edit.");
+            showAlert(Alert.AlertType.WARNING, "Please select a task to edit.");
             return;
         }
 
-        // Autofill the selected task details
         descriptionField.setText(selectedTask.getDescription());
         checkBox.setSelected(selectedTask.isCompleted());
-
-        // Show the Save button to allow editing
         saveButton.setVisible(true);
-    }
-
-    @FXML
-    public void handleDeleteTask() {
-        Task selectedTask = taskTableView.getSelectionModel().getSelectedItem();
-        if (selectedTask != null) {
-            taskList.remove(selectedTask);
-        }
     }
 
     @FXML
     public void handleSaveTask() {
         if (selectedTask == null) {
-            showAlert(AlertType.WARNING, "Please select a task to save.");
+            showAlert(Alert.AlertType.WARNING, "Please select a task to save.");
             return;
         }
 
-        // Update task description and completion status
         String newDescription = descriptionField.getText();
         boolean isCompleted = checkBox.isSelected();
 
-        selectedTask.descriptionProperty().set(newDescription);
-        selectedTask.completedProperty().set(isCompleted);
+        // Update task in backend
+        taskController.updateTask(selectedTask.getId(), newDescription, isCompleted);
+        loadTasksFromBackend();
 
-        taskTableView.refresh(); // Refresh the table view to show updated data
-
-        showAlert(AlertType.INFORMATION, "Task updated successfully!");
+        showAlert(Alert.AlertType.INFORMATION, "Task updated successfully!");
 
         descriptionField.clear();
-        checkBox.setSelected(false);  // Reset checkbox
-        saveButton.setVisible(false);  // Hide save button after editing
+        checkBox.setSelected(false);
+        saveButton.setVisible(false);
     }
 
-    // Show alert with the given message
-    private void showAlert(AlertType type, String message) {
+    @FXML
+    public void handleDeleteTask() {
+        if (selectedTask == null) {
+            showAlert(Alert.AlertType.WARNING, "Please select a task to delete.");
+            return;
+        }
+
+        // Delete task via backend
+        taskController.deleteTask(selectedTask.getId());
+        loadTasksFromBackend();
+
+        showAlert(Alert.AlertType.INFORMATION, "Task deleted successfully!");
+    }
+
+    private void showAlert(Alert.AlertType type, String message) {
         Alert alert = new Alert(type);
         alert.setTitle("Notification");
         alert.setHeaderText(null);
