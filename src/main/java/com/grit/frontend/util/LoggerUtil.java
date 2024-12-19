@@ -5,7 +5,7 @@ import java.util.logging.*;
 
 public class LoggerUtil {
 
-    private static Logger logger;
+    private static final Logger logger;
 
     static {
         logger = Logger.getLogger(LoggerUtil.class.getName());
@@ -25,7 +25,22 @@ public class LoggerUtil {
     }
 
     // Public method to retrieve the logger
-    public static Logger getLogger(String name) {
+    public static Logger getLogger() {
         return logger;
+    }
+
+    // Method to log info level messages
+    public static void logInfo(String message) {
+        logger.log(Level.INFO, message);
+    }
+
+    // Method to log warning level messages
+    public static void logWarn(String message) {
+        logger.log(Level.WARNING, message);
+    }
+
+    // Method to log error level messages
+    public static void logError(String message) {
+        logger.log(Level.SEVERE, message);
     }
 }
