@@ -1,7 +1,9 @@
 package com.grit.frontend;
 
+import com.grit.backend.server.TaskHttpServer;
 import com.grit.frontend.util.LoggerUtil;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
@@ -17,19 +19,32 @@ public class MainApp extends Application {
     public void start(Stage stage) {
         logger.info("Starting the application...");
 
-        try {
-            FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/com/grit/frontend/main-view.fxml"));
-            Scene scene = new Scene(fxmlLoader.load(), 500, 400);
-            stage.setTitle("Reminder!");
-            stage.setScene(scene);
-            stage.show();
+        // Start the server in a separate thread
+        new Thread(() -> {
+            try {
+                TaskHttpServer server = new TaskHttpServer(); // Initialize the HTTP server
+                server.start();  // Start the server
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Failed to start the HTTP server", e);
+            }
+        }).start();
 
-            logger.info("Application started successfully.");
-        } catch (IOException e) {
-            logger.log(Level.SEVERE, "Failed to load the FXML file: main-view.fxml. Please check the file's existence and format.", e);
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "Unexpected error occurred while starting the application.", e);
-        }
+        // Start JavaFX UI (main window)
+        Platform.runLater(() -> {
+            try {
+                FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/com/grit/frontend/main-view.fxml"));
+                Scene scene = new Scene(fxmlLoader.load(), 500, 400);
+                stage.setTitle("Reminder!");
+                stage.setScene(scene);
+                stage.show();
+
+                logger.info("Application started successfully.");
+            } catch (IOException e) {
+                logger.log(Level.SEVERE, "Failed to load the FXML file: main-view.fxml. Please check the file's existence and format.", e);
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Unexpected error occurred while starting the application.", e);
+            }
+        });
     }
 
     public static void main(String[] args) {

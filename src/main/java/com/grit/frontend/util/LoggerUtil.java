@@ -25,7 +25,7 @@ public class LoggerUtil {
     }
 
     // Public method to retrieve the logger
-    public static Logger getLogger() {
+    public static Logger getLogger(String name) {
         return logger;
     }
 
