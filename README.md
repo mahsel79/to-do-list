@@ -1,6 +1,6 @@
 ### **To-Do List Management System**
 
-This project is a Java-based To-Do List Management System, designed to manage tasks interactively through a simple user interface. Users can create, view, update, and delete tasks, as well as track their completion status.
+This project is a Java-based To-Do List Management System that provides a graphical user interface (GUI) for managing tasks and supports a lightweight HTTP server for JSON-based CRUD operations. Users can create, view, update, and delete tasks seamlessly via the GUI or interact with the backend APIs for external integrations.
 
 ---
 
@@ -10,49 +10,56 @@ This project is a Java-based To-Do List Management System, designed to manage ta
 3. [Technologies and Libraries](#technologies-and-libraries)
 4. [Code Structure and Modules](#code-structure-and-modules)
 5. [Task Management Process](#task-management-process)
-6. [How to Run the Project](#how-to-run-the-project)
+6. [API Endpoints](#api-endpoints)
+7. [How to Run the Project](#how-to-run-the-project)
 
 ---
 
 ### **Project Overview**
-The goal of this project is to create a lightweight task management system. Users can:
-- Create new tasks.
-- View all existing tasks.
-- Update task descriptions or their completion status.
-- Delete tasks and update task IDs to maintain sequential order.
-- Track task status (completed or not completed).
 
-The application integrates a JavaFX-based front-end for user interaction and a backend to manage tasks in memory.
+The goal of this project is to create a lightweight task management system that can be operated via a GUI or RESTful APIs. Users can:
+- Manage tasks directly in the GUI.
+- Interact with the backend through HTTP API calls.
+- Perform CRUD (Create, Read, Update, Delete) operations on tasks using JSON-based endpoints.
+
+The project uses an in-memory data store to manage tasks during runtime, ensuring fast and efficient operations without requiring a database setup.
 
 ---
 
 ### **Features**
-1. **Create Tasks**: Add new tasks with descriptions and completion status.
-2. **View Tasks**: List all tasks with their IDs, descriptions, and statuses.
-3. **Update Tasks**: Modify task descriptions and toggle their completion status.
-4. **Delete Tasks**: Remove tasks by their unique ID.
-5. **Task ID Management**: Automatically update IDs to ensure sequential order after deletions.
-6. **Interactive Menu**: A user-friendly console or JavaFX interface for managing tasks.
+1. **GUI-based Task Management**:
+    - Create, view, update, and delete tasks with a JavaFX interface.
+2. **JSON API for Task Operations**:
+    - Perform CRUD operations through RESTful HTTP endpoints.
+3. **Task ID Management**:
+    - Automatically update task IDs to maintain sequential order after deletions.
+4. **Real-Time Sync**:
+    - GUI interacts with the backend through API calls to ensure consistency.
+5. **Lightweight HTTP Server**:
+    - Built-in HTTP server for API requests, eliminating the need for external web servers.
+6. **Logging**:
+    - Detailed logs for operations, errors, and server activity.
 
 ---
 
 ### **Technologies and Libraries**
 
 #### **Core Technologies**
-- **Java 21**: Built using modern Java features for efficiency and maintainability.
-- **JavaFX**: Provides a graphical user interface for task management.
-- **Java Collections Framework**: Used to manage tasks in memory with lists and maps.
+- **Java 21**: Modern Java features for performance and simplicity.
+- **JavaFX**: Provides a graphical interface for task management.
+- **HTTP Server**: Custom HTTP server implementation for handling API requests.
 
 #### **Key Libraries**
-- **java.util**: For utilities like lists, maps, and optional data structures.
-- **java.util.logging**: For implementing logging functionality.
-- **javafx.base/javafx.scene**: For JavaFX-based UI components.
+- **java.util**: Utilities like collections, optional, and logging.
+- **java.util.logging**: Implements logging for debugging and operational tracking.
+- **java.net.http**: Handles HTTP request processing.
+- **com.fasterxml.jackson**: For JSON serialization and deserialization (optional).
 
 ---
 
 ### **Code Structure and Modules**
 
-The project is organized for clarity and scalability:
+The project is structured for clarity and scalability:
 
 ```
 to-do-list/
@@ -61,20 +68,22 @@ to-do-list/
 │   │   ├── java/
 │   │   │   ├── com/
 │   │   │   │   ├── grit/
-│   │   │   │   │   ├── backend/         // Backend logic and data
+│   │   │   │   │   ├── backend/         // Backend logic and HTTP server
+│   │   │   │   │   │   ├── controller/  // Task API endpoints
+│   │   │   │   │   │   │   ├── TaskController.java
 │   │   │   │   │   │   ├── model/       // Task entity
 │   │   │   │   │   │   │   ├── Task.java
 │   │   │   │   │   │   ├── service/     // Task services
 │   │   │   │   │   │   │   ├── TaskService.java
 │   │   │   │   │   │   │   ├── InMemoryTaskService.java
-│   │   │   │   │   ├── frontend/        // Frontend UI and utilities
-│   │   │   │   │   │   ├── util/        // Logging and helpers
-│   │   │   │   │   │   │   ├── LoggerUtil.java
+│   │   │   │   │   │   ├── server/      // HTTP server setup
+│   │   │   │   │   │   │   ├── HttpServer.java
+│   │   │   │   │   ├── frontend/        // Frontend GUI and utilities
 │   │   │   │   │   │   ├── ui/          // JavaFX UI components
 │   │   │   │   │   │   │   ├── TaskController.java
 │   │   │   │   │   │   │   ├── MainApp.java
-│   ├── resources/
-│   │   ├── com/grit/frontend/           // FXML files for JavaFX
+│   │   │   │   │   │   ├── util/        // Logger utilities
+│   │   │   │   │   │   │   ├── LoggerUtil.java
 ├── README.md                            // Project description and instructions
 ```
 
@@ -82,24 +91,52 @@ to-do-list/
 
 ### **Task Management Process**
 
-#### **1. Create Tasks**
-- Users provide a task description and completion status.
-- A new task is created and stored in memory with a unique ID.
+#### **1. GUI-Based Management**
+- **Create Tasks**: Add tasks by entering a description and selecting a completion status.
+- **View Tasks**: List all tasks, including their ID, description, and completion status.
+- **Update Tasks**: Modify task details via a user-friendly interface.
+- **Delete Tasks**: Remove tasks and update task IDs automatically.
 
-#### **2. View Tasks**
-- Users can view all tasks in a list.
-- Each task includes its ID, description, and status.
+#### **2. API-Based Management**
+- External systems can interact with the backend via HTTP APIs.
+- All API responses are in JSON format for compatibility and ease of integration.
 
-#### **3. Update Tasks**
-- Users provide the task ID and updated details.
-- The task's description and/or completion status are modified.
+---
 
-#### **4. Delete Tasks**
-- Users specify the ID of the task to delete.
-- The task is removed, and IDs are updated to maintain sequential order.
+### **API Endpoints**
 
-#### **5. Maintain Task Order**
-- After a deletion, the task list is sorted, and IDs are reassigned sequentially.
+1. **Retrieve All Tasks**
+    - **GET /tasks**
+    - **Response**: JSON array of tasks.
+    - **Example**:
+      ```json
+      [
+        { "id": 1, "description": "Buy groceries", "completed": false },
+        { "id": 2, "description": "Finish homework", "completed": true }
+      ]
+      ```
+
+2. **Create a Task**
+    - **POST /tasks**
+    - **Request Body**:
+      ```json
+      { "description": "Walk the dog", "completed": false }
+      ```
+    - **Response**: Created task with unique ID.
+
+3. **Update a Task**
+    - **PUT /tasks/{id}**
+    - **Request Body**:
+      ```json
+      { "description": "Walk the dog", "completed": true }
+      ```
+    - **Response**: Updated task.
+
+4. **Delete a Task**
+    - **DELETE /tasks/{id}**
+    - **Response**:
+        - **200 OK**: Task deleted successfully.
+        - **404 Not Found**: Task with given ID not found.
 
 ---
 
@@ -107,8 +144,8 @@ to-do-list/
 
 #### **Prerequisites**
 1. **Java 21 or Later**: Ensure Java is installed and properly configured.
-2. **IDE**: (Optional) Use IntelliJ IDEA for development and execution.
-3. **JavaFX Runtime**: Required for the GUI interface.
+2. **JavaFX Runtime**: Required for GUI functionality.
+3. **IDE**: IntelliJ IDEA or another IDE for development and testing.
 
 #### **Steps to Run**
 1. Clone or download the project:
@@ -123,9 +160,17 @@ to-do-list/
    ```bash
    javac -d out src/main/java/com/grit/**/*.java
    ```
-4. Run the application:
+4. Start the HTTP server:
+   ```bash
+   java -cp out com.grit.backend.server.HttpServer
+   ```
+5. Run the GUI application:
    ```bash
    java -cp out com.grit.frontend.ui.MainApp
    ```
-5. The GUI or console interface will appear for task management.
 
+---
+
+### **Usage**
+- Open the GUI for an interactive experience.
+- Use RESTful APIs for programmatic task management via tools like Postman or `curl`.
