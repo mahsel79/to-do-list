@@ -150,7 +150,7 @@ to-do-list/
 #### **Steps to Run**
 1. Clone or download the project:
    ```bash
-   git clone https://github.com/username/to-do-list.git
+   git clone https://github.com/mahsel79/to-do-list.git
    ```
 2. Navigate to the project directory:
    ```bash
