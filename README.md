@@ -78,13 +78,16 @@ to-do-list/
 │   │   │   │   │   │   │   ├── InMemoryTaskService.java
 │   │   │   │   │   │   ├── server/      // HTTP server setup
 │   │   │   │   │   │   │   ├── HttpServer.java
-│   │   │   │   │   ├── frontend/        // Frontend GUI and utilities
-│   │   │   │   │   │   ├── ui/          // JavaFX UI components
-│   │   │   │   │   │   │   ├── TaskController.java
-│   │   │   │   │   │   │   ├── MainApp.java
-│   │   │   │   │   │   ├── util/        // Logger utilities
-│   │   │   │   │   │   │   ├── LoggerUtil.java
+│   │   │   │   │   ├── frontend/        // Frontend GUI and logic
+│   │   │   │   │   │   ├── controller/  // GUI controllers
+│   │   │   │   │   │   │   ├── ToDoController.java
+│   │   │   │   │   │   ├── model/       // GUI task entity
+│   │   │   │   │   │   │   ├── Task.java
+│   │   │   │   │   │   ├── MainApp.java // Main application entry point
+│   │   │   │   │   ├── util/            // Logger utilities
+│   │   │   │   │   │   ├── LoggerUtil.java
 ├── README.md                            // Project description and instructions
+                    // Project description and instructions
 ```
 
 ---
