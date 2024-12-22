@@ -2,18 +2,16 @@ package com.grit.frontend.controller;
 
 import com.grit.backend.controller.TaskController;
 import com.grit.backend.model.Task;
+import com.grit.frontend.util.LoggerUtil;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-
 import java.util.List;
 import java.util.logging.Logger;
-import com.grit.frontend.util.LoggerUtil;
 
 public class ToDoController {
 
-    private static final Logger logger = LoggerUtil.getLogger(ToDoController.class.getName()); // Logger
+    private static final Logger logger = LoggerUtil.getLogger(ToDoController.class.getName());
 
     @FXML
     private TableView<Task> taskTableView;
@@ -29,30 +27,31 @@ public class ToDoController {
     @FXML
     private CheckBox checkBox;
     @FXML
+    private Button addButton;
+    @FXML
+    private Button editButton;
+    @FXML
     private Button saveButton;
+    @FXML
+    private Button deleteButton;
 
-    private TaskController taskController;
+    private final TaskController taskController;
     private Task selectedTask;
 
-    public ToDoController() {
-        // Initialize TaskController from backend
-        taskController = new TaskController();
+    // Constructor updated to accept TaskController as a dependency
+    public ToDoController(TaskController taskController) {
+        this.taskController = taskController;
     }
 
     @FXML
     public void initialize() {
-        // Initialize columns
+        // Initialize table columns
         idColumn.setCellValueFactory(cellData -> cellData.getValue().idProperty().asObject());
         descriptionColumn.setCellValueFactory(cellData -> cellData.getValue().descriptionProperty());
         completedColumn.setCellValueFactory(cellData -> cellData.getValue().completedProperty().asObject());
 
-        // Load data from the backend
+        // Load tasks from the backend
         loadTasksFromBackend();
-
-        // Add demo data if the backend is empty
-        if (taskController.getAllTasks().isEmpty()) {
-            addDemoData();
-        }
 
         // Add selection listener for TableView
         taskTableView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
@@ -63,23 +62,15 @@ public class ToDoController {
                 saveButton.setVisible(false);
             }
         });
+
+        saveButton.setVisible(false); // Hide the save button initially
     }
 
     private void loadTasksFromBackend() {
         logger.info("Loading tasks from backend...");
-        List<Task> tasks = taskController.getAllTasks(); // Get tasks from backend
-        taskTableView.setItems(FXCollections.observableArrayList(tasks)); // Load tasks into TableView
+        List<Task> tasks = taskController.getAllTasks();
+        taskTableView.setItems(FXCollections.observableArrayList(tasks));
         logger.info("Loaded " + tasks.size() + " tasks from backend.");
-    }
-
-    private void addDemoData() {
-        logger.info("Adding demo data as backend is empty.");
-        // Adding demo tasks directly to the backend (mock behavior)
-        taskController.createTask("Finish JavaFX tutorial", false);
-        taskController.createTask("Buy groceries", false);
-        taskController.createTask("Clean the house", true);
-        loadTasksFromBackend(); // Reload tasks after adding demo data
-        logger.info("Demo data added successfully.");
     }
 
     @FXML
@@ -93,13 +84,10 @@ public class ToDoController {
             return;
         }
 
-        // Add task via backend and reload tasks
         logger.info("Adding new task with description: " + description + " and completed status: " + isCompleted);
         taskController.createTask(description, isCompleted);
-        loadTasksFromBackend();
-
-        descriptionField.clear();
-        checkBox.setSelected(false);
+        loadTasksFromBackend(); // Reload tasks after adding a new one
+        clearInputFields();
     }
 
     @FXML
@@ -127,15 +115,18 @@ public class ToDoController {
         String newDescription = descriptionField.getText();
         boolean isCompleted = checkBox.isSelected();
 
-        // Update task in backend
+        if (newDescription == null || newDescription.trim().isEmpty()) {
+            logger.warning("Attempted to save a task with an empty description.");
+            showAlert(Alert.AlertType.ERROR, "Description cannot be empty.");
+            return;
+        }
+
         logger.info("Saving updated task with ID: " + selectedTask.getId() + ", New Description: " + newDescription + ", New Completed status: " + isCompleted);
         taskController.updateTask(selectedTask.getId(), newDescription, isCompleted);
         loadTasksFromBackend();
-
         showAlert(Alert.AlertType.INFORMATION, "Task updated successfully!");
 
-        descriptionField.clear();
-        checkBox.setSelected(false);
+        clearInputFields();
         saveButton.setVisible(false);
     }
 
@@ -147,12 +138,16 @@ public class ToDoController {
             return;
         }
 
-        // Delete task via backend
         logger.info("Deleting task with ID: " + selectedTask.getId());
         taskController.deleteTask(selectedTask.getId());
         loadTasksFromBackend();
-
         showAlert(Alert.AlertType.INFORMATION, "Task deleted successfully!");
+        clearInputFields();
+    }
+
+    private void clearInputFields() {
+        descriptionField.clear();
+        checkBox.setSelected(false);
     }
 
     private void showAlert(Alert.AlertType type, String message) {

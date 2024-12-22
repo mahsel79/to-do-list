@@ -6,7 +6,6 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-
 import java.util.logging.Logger;
 import com.grit.frontend.util.LoggerUtil;
 
@@ -28,19 +27,19 @@ public class Task {
     // Getters for properties
     public int getId() {
         int taskId = id.get();
-        logger.info("Getting ID of task: " + taskId);
+        logger.fine("Getting ID of task: " + taskId);
         return taskId;
     }
 
     public String getDescription() {
         String taskDescription = description.get();
-        logger.info("Getting description of task: " + taskDescription);
+        logger.fine("Getting description of task: " + taskDescription);
         return taskDescription;
     }
 
     public boolean isCompleted() {
         boolean taskCompleted = completed.get();
-        logger.info("Getting completion status of task: " + taskCompleted);
+        logger.fine("Getting completion status of task: " + taskCompleted);
         return taskCompleted;
     }
 

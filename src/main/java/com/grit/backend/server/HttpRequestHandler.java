@@ -1,19 +1,22 @@
 package com.grit.backend.server;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grit.backend.controller.TaskController;
 import com.grit.backend.model.Task;
-import com.grit.frontend.util.LoggerUtil;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
+import com.grit.frontend.util.LoggerUtil;
+import com.grit.frontend.util.TaskEventManager;
 
 public class HttpRequestHandler implements HttpHandler {
-
     private final TaskController taskController;
+    private final TaskEventManager eventManager = TaskEventManager.getInstance();
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private static final int MAX_REQUEST_SIZE = 1024 * 1024; // 1MB limit
 
     public HttpRequestHandler(TaskController taskController) {
         this.taskController = taskController;
@@ -21,111 +24,164 @@ public class HttpRequestHandler implements HttpHandler {
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
-        String response = "";
-        int statusCode = 200;
-
-        // Get the request method (GET, POST, PUT, DELETE)
-        String method = exchange.getRequestMethod();
-        LoggerUtil.logInfo("Request method: " + method + " received for " + exchange.getRequestURI().getPath());
-
         try {
-            switch (method) {
+            // Set CORS headers
+            exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+            exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+            exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type");
+
+            // Handle OPTIONS requests for CORS
+            if ("OPTIONS".equals(exchange.getRequestMethod())) {
+                exchange.sendResponseHeaders(204, -1);
+                return;
+            }
+
+            // Validate content type for POST/PUT requests
+            if ("POST".equals(exchange.getRequestMethod()) || "PUT".equals(exchange.getRequestMethod())) {
+                String contentType = exchange.getRequestHeaders().getFirst("Content-Type");
+                if (contentType == null || !contentType.contains("application/json")) {
+                    sendErrorResponse(exchange, "Content-Type must be application/json", 415);
+                    return;
+                }
+            }
+
+            switch (exchange.getRequestMethod()) {
                 case "GET":
-                    response = handleGetRequest(exchange);
+                    handleGetRequest(exchange);
                     break;
                 case "POST":
-                    response = handlePostRequest(exchange);
+                    handlePostRequest(exchange);
                     break;
                 case "PUT":
-                    response = handlePutRequest(exchange);
+                    handlePutRequest(exchange);
                     break;
                 case "DELETE":
-                    response = handleDeleteRequest(exchange);
+                    handleDeleteRequest(exchange);
                     break;
                 default:
-                    statusCode = 405; // Method Not Allowed
-                    response = "Method not allowed";
-                    LoggerUtil.logWarn("Method not allowed: " + method);
+                    sendErrorResponse(exchange, "Method not allowed", 405);
             }
         } catch (Exception e) {
-            statusCode = 500; // Internal Server Error
-            response = "Server error: " + e.getMessage();
             LoggerUtil.logError("Error processing request: " + e.getMessage());
+            sendErrorResponse(exchange, "Internal server error", 500);
         }
-
-        // Send response headers
-        exchange.sendResponseHeaders(statusCode, response.getBytes(StandardCharsets.UTF_8).length);
-        OutputStream os = exchange.getResponseBody();
-        os.write(response.getBytes(StandardCharsets.UTF_8));
-        os.close();
     }
 
-    private String handleGetRequest(HttpExchange exchange) {
-        String path = exchange.getRequestURI().getPath();
-        if (path.equals("/tasks")) {
-            LoggerUtil.logInfo("Fetching all tasks");
-            List<Task> tasks = taskController.getAllTasks();
-            StringBuilder sb = new StringBuilder();
-            for (Task task : tasks) {
-                sb.append("ID: ").append(task.getId()).append(", ")
-                        .append("Description: ").append(task.getDescription()).append(", ")
-                        .append("Completed: ").append(task.isCompleted()).append("\n");
+    private String readRequestBody(HttpExchange exchange) throws IOException {
+        try (InputStream is = exchange.getRequestBody();
+             ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+            int totalBytes = 0;
+
+            while ((bytesRead = is.read(buffer)) != -1) {
+                totalBytes += bytesRead;
+                if (totalBytes > MAX_REQUEST_SIZE) {
+                    throw new IOException("Request body too large");
+                }
+                os.write(buffer, 0, bytesRead);
             }
-            LoggerUtil.logInfo("Returning " + tasks.size() + " tasks");
-            return sb.toString();
+
+            return os.toString(StandardCharsets.UTF_8);
         }
-        LoggerUtil.logWarn("Invalid path for GET request: " + path);
-        return "Invalid path";
     }
 
-    private String handlePostRequest(HttpExchange exchange) throws IOException {
-        InputStream is = exchange.getRequestBody();
-        String body = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+    private void handlePostRequest(HttpExchange exchange) throws IOException {
+        String body = readRequestBody(exchange);
+        try {
+            Map requestData = objectMapper.readValue(body, Map.class);
+            String description = (String) requestData.get("description");
+            Boolean completed = (Boolean) requestData.get("completed");
 
-        LoggerUtil.logInfo("Received POST request body: " + body);
+            if (description == null || description.trim().isEmpty()) {
+                sendErrorResponse(exchange, "Description is required", 400);
+                return;
+            }
 
-        String[] parts = body.split(",");
-        String description = parts[0];
-        boolean completed = Boolean.parseBoolean(parts[1]);
+            Task newTask = taskController.createTask(description, completed != null ? completed : false);
+            eventManager.notifyTaskChange("CREATE");
 
-        Task newTask = taskController.createTask(description, completed);
-        LoggerUtil.logInfo("Created new task with ID: " + newTask.getId());
-
-        return "Task created with ID: " + newTask.getId();
-    }
-
-    private String handlePutRequest(HttpExchange exchange) throws IOException {
-        String path = exchange.getRequestURI().getPath();
-        int taskId = Integer.parseInt(path.split("/")[2]);
-
-        InputStream is = exchange.getRequestBody();
-        String body = new String(is.readAllBytes(), StandardCharsets.UTF_8);
-
-        LoggerUtil.logInfo("Received PUT request for task ID: " + taskId + " with body: " + body);
-
-        String[] parts = body.split(",");
-        String description = parts[0];
-        boolean completed = Boolean.parseBoolean(parts[1]);
-
-        Task updatedTask = taskController.updateTask(taskId, description, completed);
-        LoggerUtil.logInfo("Updated task with ID: " + updatedTask.getId());
-
-        return "Task updated with ID: " + updatedTask.getId();
-    }
-
-    private String handleDeleteRequest(HttpExchange exchange) {
-        String path = exchange.getRequestURI().getPath();
-        int taskId = Integer.parseInt(path.split("/")[2]);
-
-        LoggerUtil.logInfo("Received DELETE request for task ID: " + taskId);
-
-        boolean deleted = taskController.deleteTask(taskId);
-        if (deleted) {
-            LoggerUtil.logInfo("Task with ID: " + taskId + " deleted successfully");
-            return "Task deleted";
-        } else {
-            LoggerUtil.logWarn("Task with ID: " + taskId + " not found for deletion");
-            return "Task not found";
+            sendJsonResponse(exchange, objectMapper.writeValueAsString(newTask), 201);
+        } catch (Exception e) {
+            sendErrorResponse(exchange, "Invalid request format: " + e.getMessage(), 400);
         }
+    }
+
+    private void handlePutRequest(HttpExchange exchange) throws IOException {
+        String path = exchange.getRequestURI().getPath();
+        String[] pathParts = path.split("/");
+
+        if (pathParts.length != 3) {
+            sendErrorResponse(exchange, "Invalid URL format", 400);
+            return;
+        }
+
+        try {
+            int taskId = Integer.parseInt(pathParts[2]);
+            String body = readRequestBody(exchange);
+            Map<String, Object> requestData = objectMapper.readValue(body, Map.class);
+
+            String description = (String) requestData.get("description");
+            Boolean completed = (Boolean) requestData.get("completed");
+
+            if (description == null || description.trim().isEmpty()) {
+                sendErrorResponse(exchange, "Description is required", 400);
+                return;
+            }
+
+            Task updatedTask = taskController.updateTask(taskId, description, completed != null ? completed : false);
+            if (updatedTask != null) {
+                eventManager.notifyTaskChange("UPDATE");
+                sendJsonResponse(exchange, objectMapper.writeValueAsString(updatedTask), 200);
+            } else {
+                sendErrorResponse(exchange, "Task not found", 404);
+            }
+        } catch (NumberFormatException e) {
+            sendErrorResponse(exchange, "Invalid task ID format", 400);
+        } catch (Exception e) {
+            sendErrorResponse(exchange, "Invalid request format: " + e.getMessage(), 400);
+        }
+    }
+
+    private void handleDeleteRequest(HttpExchange exchange) throws IOException {
+        String[] pathParts = exchange.getRequestURI().getPath().split("/");
+        if (pathParts.length != 3) {
+            sendErrorResponse(exchange, "Invalid URL format", 400);
+            return;
+        }
+
+        try {
+            int taskId = Integer.parseInt(pathParts[2]);
+            boolean deleted = taskController.deleteTask(taskId);
+
+            if (deleted) {
+                eventManager.notifyTaskChange("DELETE");
+                sendJsonResponse(exchange, "{\"message\":\"Task deleted successfully\"}", 200);
+            } else {
+                sendErrorResponse(exchange, "Task not found", 404);
+            }
+        } catch (NumberFormatException e) {
+            sendErrorResponse(exchange, "Invalid task ID format", 400);
+        }
+    }
+
+    private void handleGetRequest(HttpExchange exchange) throws IOException {
+        List<Task> tasks = taskController.getAllTasks();
+        sendJsonResponse(exchange, objectMapper.writeValueAsString(tasks), 200);
+    }
+
+    private void sendJsonResponse(HttpExchange exchange, String jsonResponse, int statusCode) throws IOException {
+        byte[] responseBytes = jsonResponse.getBytes(StandardCharsets.UTF_8);
+        exchange.getResponseHeaders().set("Content-Type", "application/json");
+        exchange.sendResponseHeaders(statusCode, responseBytes.length);
+        try (OutputStream os = exchange.getResponseBody()) {
+            os.write(responseBytes);
+        }
+    }
+
+    private void sendErrorResponse(HttpExchange exchange, String message, int statusCode) throws IOException {
+        String jsonError = String.format("{\"error\":\"%s\"}", message);
+        sendJsonResponse(exchange, jsonError, statusCode);
     }
 }
