@@ -1,9 +1,8 @@
 package com.grit.backend.repository;
 
-import com.grit.backend.model.Task;
 import java.util.List;
 import java.util.Optional;
-
+import com.grit.model.Task;
 public interface TaskRepository {
 
     List<Task> findAll(); // Retrieve all tasks

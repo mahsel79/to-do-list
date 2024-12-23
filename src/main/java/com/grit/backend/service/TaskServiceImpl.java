@@ -1,13 +1,12 @@
 package com.grit.backend.service;
 
-import com.grit.backend.model.Task;
 import com.grit.backend.repository.TaskRepository;
 import com.grit.frontend.util.LoggerUtil;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
-
+import com.grit.model.Task;
 public class TaskServiceImpl extends TaskService {
     private static final Logger logger = LoggerUtil.getLogger(TaskServiceImpl.class.getName()); // Logger
 

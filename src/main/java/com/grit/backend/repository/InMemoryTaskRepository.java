@@ -1,9 +1,9 @@
 package com.grit.backend.repository;
 
-import com.grit.backend.model.Task;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import com.grit.model.Task;
 
 public class InMemoryTaskRepository implements TaskRepository {
     private List<Task> tasks = new ArrayList<>(); // Store tasks in memory

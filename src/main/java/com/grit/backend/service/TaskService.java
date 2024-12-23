@@ -1,6 +1,7 @@
 package com.grit.backend.service;
 
-import com.grit.backend.model.Task;
+import com.grit.model.Task;
+
 import com.grit.backend.repository.TaskRepository;
 import com.grit.frontend.util.LoggerUtil;
 import java.util.List;

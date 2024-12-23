@@ -1,7 +1,6 @@
 package com.grit.backend.server;
 
 import com.grit.backend.controller.TaskController;
-import com.grit.backend.model.Task;
 import com.grit.frontend.util.LoggerUtil;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -10,6 +9,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import com.grit.model.Task;
 
 public class HttpRequestHandler implements HttpHandler {
 

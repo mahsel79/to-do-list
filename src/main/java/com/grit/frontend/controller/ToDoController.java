@@ -1,12 +1,10 @@
 package com.grit.frontend.controller;
 
 import com.grit.backend.controller.TaskController;
-import com.grit.backend.model.Task;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-
+import com.grit.model.Task;
 import java.util.List;
 import java.util.logging.Logger;
 import com.grit.frontend.util.LoggerUtil;

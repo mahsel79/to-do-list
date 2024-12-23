@@ -1,12 +1,13 @@
 package com.grit.backend.controller;
 
-import com.grit.backend.model.Task;
+import com.grit.model.Task;
+import java.util.List;
 import com.grit.backend.service.TaskService;
 import com.grit.backend.service.TaskServiceImpl;
 import com.grit.backend.repository.TaskRepository;
 import com.grit.backend.repository.InMemoryTaskRepository;
 
-import java.util.List;
+
 import java.util.Optional;
 import java.util.logging.Logger;
 import com.grit.frontend.util.LoggerUtil;
