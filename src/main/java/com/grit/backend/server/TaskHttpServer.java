@@ -2,36 +2,50 @@ package com.grit.backend.server;
 
 import com.grit.backend.controller.TaskController;
 import com.grit.backend.repository.InMemoryTaskRepository;
-import com.grit.backend.service.TaskServiceImpl;
+import com.grit.backend.repository.TaskRepository;
+import com.grit.backend.service.InMemoryTaskService;
 import com.grit.backend.service.TaskService;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import com.sun.net.httpserver.HttpServer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class TaskHttpServer {
 
     private static final int PORT = 8080;
+    private static final Logger LOGGER = Logger.getLogger(TaskHttpServer.class.getName());
     private HttpServer server;
 
-    public void start() throws IOException {
-        // Create a task controller
-        TaskController taskController = new TaskController(new TaskServiceImpl(new InMemoryTaskRepository()));
+    public void start() {
+        try {
+            // Create a task controller
+            TaskRepository taskRepository = new InMemoryTaskRepository();
+            TaskService taskService = new InMemoryTaskService(taskRepository);
+            TaskController taskController = new TaskController(taskService); // No need to pass ObjectMapper here
 
-        // Create a new HttpServer
-        server = HttpServer.create(new InetSocketAddress(PORT), 0);
-        server.createContext("/tasks", new HttpRequestHandler(taskController)); // Handle tasks route
-        server.setExecutor(null); // Use the default executor
-        server.start();
+            // Create a new HttpServer
+            server = HttpServer.create(new InetSocketAddress(PORT), 0);
+            server.createContext("/tasks", new HttpRequestHandler(taskController));
 
-        System.out.println("Server started on port " + PORT);
+            server.setExecutor(null); // Use the default executor
+            server.start();
+
+            LOGGER.info("Server started on port " + PORT);
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Failed to start the HTTP server", e);
+        }
     }
 
     public void stop() {
-        server.stop(0); // Stop the server gracefully
+        if (server != null) {
+            server.stop(0); // Stop the server gracefully
+            LOGGER.info("Server stopped successfully.");
+        }
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         TaskHttpServer httpServer = new TaskHttpServer();
         httpServer.start();
     }

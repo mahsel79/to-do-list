@@ -1,5 +1,6 @@
 package com.grit.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -16,7 +17,14 @@ public class Task {
     private final StringProperty description;   // For JavaFX TableView binding
     private final BooleanProperty completed;    // For JavaFX TableView binding
 
-    // Constructor
+    // Default constructor for Jackson deserialization
+    public Task() {
+        this.id = new SimpleIntegerProperty();
+        this.description = new SimpleStringProperty();
+        this.completed = new SimpleBooleanProperty();
+    }
+
+    // Constructor with arguments
     public Task(int id, String description, boolean completed) {
         this.id = new SimpleIntegerProperty(id);
         this.description = new SimpleStringProperty(description);
@@ -38,18 +46,18 @@ public class Task {
     }
 
     // Getters (standard Java accessors)
+    @JsonProperty("id") // Add @JsonProperty for custom serialization
     public int getId() {
-        logger.fine(() -> "Accessing ID: " + id.get());
         return id.get();
     }
 
+    @JsonProperty("description") // Add @JsonProperty for custom serialization
     public String getDescription() {
-        logger.fine(() -> "Accessing Description: " + description.get());
         return description.get();
     }
 
+    @JsonProperty("completed") // Add @JsonProperty for custom serialization
     public boolean isCompleted() {
-        logger.fine(() -> "Accessing Completed status: " + completed.get());
         return completed.get();
     }
 

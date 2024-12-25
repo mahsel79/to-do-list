@@ -1,7 +1,6 @@
 package com.grit.backend.service;
 
 import com.grit.model.Task;
-
 import com.grit.backend.repository.TaskRepository;
 import com.grit.frontend.util.LoggerUtil;
 import java.util.List;
@@ -46,5 +45,17 @@ public abstract class TaskService {
     public boolean deleteTask(int id) {
         logger.info("Deleting task with ID: " + id);
         return taskRepository.deleteById(id);
+    }
+
+    // Directly fetch task by ID (throws exception if not found)
+    public Task findById(int id) {
+        Optional<Task> taskOptional = taskRepository.findById(id);
+        if (taskOptional.isPresent()) {
+            logger.info("Found task with ID: " + id);
+            return taskOptional.get();
+        } else {
+            logger.warning("Task with ID: " + id + " not found.");
+            throw new IllegalArgumentException("Task not found for ID: " + id);
+        }
     }
 }
