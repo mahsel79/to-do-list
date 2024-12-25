@@ -45,6 +45,15 @@ public class ToDoController {
         idColumn.setCellValueFactory(cellData -> cellData.getValue().idProperty().asObject());
         descriptionColumn.setCellValueFactory(cellData -> cellData.getValue().descriptionProperty());
         completedColumn.setCellValueFactory(cellData -> cellData.getValue().completedProperty().asObject());
+
+        // Listen for selection changes in TableView
+        taskTableView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            selectedTask = newValue;
+            if (newValue != null) {
+                LOGGER.info("Selected task: " + newValue.getDescription());
+            }
+        });
+
         loadTasksFromBackend();
     }
 
@@ -73,7 +82,6 @@ public class ToDoController {
         loadTasksFromBackend();
         clearForm();
     }
-
 
     @FXML
     public void handleEditTask() {
@@ -111,8 +119,14 @@ public class ToDoController {
             return;
         }
 
-        taskController.deleteTask(selectedTask.getId());
-        loadTasksFromBackend();
+        // Confirm with the user before deletion
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Are you sure you want to delete the selected task?", ButtonType.YES, ButtonType.NO);
+        alert.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.YES) {
+                taskController.deleteTask(selectedTask.getId());
+                loadTasksFromBackend();
+            }
+        });
     }
 
     private void clearForm() {

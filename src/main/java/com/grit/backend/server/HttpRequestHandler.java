@@ -55,9 +55,8 @@ public class HttpRequestHandler implements HttpHandler {
         }
     }
 
-    // Handle POST request - Create new task
-    // Handle POST request - Create new task
-    private void handlePostRequest(HttpExchange exchange) throws IOException {
+    // Read request body to avoid duplication
+    private String readRequestBody(HttpExchange exchange) throws IOException {
         InputStream requestBody = exchange.getRequestBody();
         BufferedReader reader = new BufferedReader(new InputStreamReader(requestBody));
         StringBuilder stringBuilder = new StringBuilder();
@@ -65,9 +64,13 @@ public class HttpRequestHandler implements HttpHandler {
         while ((line = reader.readLine()) != null) {
             stringBuilder.append(line);
         }
+        return stringBuilder.toString();
+    }
 
-        // Parse JSON request body to Task
-        Task task = objectMapper.readValue(stringBuilder.toString(), Task.class);
+    // Handle POST request - Create new task
+    private void handlePostRequest(HttpExchange exchange) throws IOException {
+        String requestBody = readRequestBody(exchange);
+        Task task = objectMapper.readValue(requestBody, Task.class);
 
         // Generate a unique ID for the new task
         int nextId = taskController.getNextTaskId();  // Generate task ID
@@ -82,22 +85,12 @@ public class HttpRequestHandler implements HttpHandler {
         }
     }
 
-
     // Handle PUT request - Update existing task
     private void handlePutRequest(HttpExchange exchange) throws IOException {
         String path = exchange.getRequestURI().getPath();
         int taskId = Integer.parseInt(path.substring(path.lastIndexOf("/") + 1));
-
-        InputStream requestBody = exchange.getRequestBody();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(requestBody));
-        StringBuilder stringBuilder = new StringBuilder();
-        String line;
-        while ((line = reader.readLine()) != null) {
-            stringBuilder.append(line);
-        }
-
-        // Parse JSON request body to Task
-        Task task = objectMapper.readValue(stringBuilder.toString(), Task.class);
+        String requestBody = readRequestBody(exchange);
+        Task task = objectMapper.readValue(requestBody, Task.class);
         task.setId(taskId);
         Task updatedTask = taskController.updateTask(taskId, task.getDescription(), task.isCompleted());
 

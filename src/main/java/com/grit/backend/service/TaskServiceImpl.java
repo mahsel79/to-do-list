@@ -1,14 +1,16 @@
 package com.grit.backend.service;
 
+import com.grit.backend.exception.TaskNotFoundException;
 import com.grit.backend.repository.TaskRepository;
 import com.grit.frontend.util.LoggerUtil;
+import com.grit.model.Task;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
-import com.grit.model.Task;
+
 public class TaskServiceImpl extends TaskService {
-    private static final Logger logger = LoggerUtil.getLogger(TaskServiceImpl.class.getName()); // Logger
+    private static final Logger logger = LoggerUtil.getLogger(TaskServiceImpl.class.getName());
 
     // Constructor to initialize TaskRepository
     public TaskServiceImpl(TaskRepository taskRepository) {
@@ -16,7 +18,7 @@ public class TaskServiceImpl extends TaskService {
         logger.info("TaskServiceImpl initialized.");
     }
 
-    // Get all tasks
+    // Override the method to fetch all tasks
     @Override
     public List<Task> getAllTasks() {
         logger.info("Fetching all tasks.");
@@ -25,20 +27,21 @@ public class TaskServiceImpl extends TaskService {
         return tasks;
     }
 
-    // Get a task by its ID
+    // Override the method to fetch a task by its ID
     @Override
-    public Optional<Task> getTaskById(int id) {
+    public Task findById(int id) {
         logger.info("Fetching task with ID: " + id);
         Optional<Task> task = taskRepository.findById(id); // Use findById to get task by ID
         if (task.isPresent()) {
             logger.info("Task found: " + task.get().getDescription());
+            return task.get();
         } else {
             logger.warning("Task with ID " + id + " not found.");
+            throw new TaskNotFoundException("Task not found for ID: " + id);
         }
-        return task;
     }
 
-    // Create a new task
+    // Override the method to create a new task
     @Override
     public Task createTask(Task task) {
         logger.info("Creating task with description: " + task.getDescription());
@@ -47,7 +50,7 @@ public class TaskServiceImpl extends TaskService {
         return createdTask;
     }
 
-    // Update an existing task
+    // Override the method to update an existing task
     @Override
     public Task updateTask(Task task) {
         logger.info("Updating task with ID: " + task.getId());
@@ -56,7 +59,7 @@ public class TaskServiceImpl extends TaskService {
         return updatedTask;
     }
 
-    // Delete a task
+    // Override the method to delete a task
     @Override
     public boolean deleteTask(int id) {
         logger.info("Deleting task with ID: " + id);

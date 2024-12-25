@@ -2,6 +2,7 @@ package com.grit.backend.service;
 
 import com.grit.backend.repository.TaskRepository;
 import com.grit.model.Task;
+import com.grit.backend.exception.TaskNotFoundException;
 
 import java.util.List;
 import java.util.Optional;
@@ -25,9 +26,15 @@ public class InMemoryTaskService extends TaskService {
 
     // Get a task by its ID
     @Override
-    public Optional<Task> getTaskById(int id) {
+    public Task findById(int id) {
         logger.info("Fetching task with ID: " + id);
-        return taskRepository.findById(id); // Fetch task by ID from repository
+        Optional<Task> taskOptional = taskRepository.findById(id);
+        if (taskOptional.isPresent()) {
+            return taskOptional.get();  // Return the found task
+        } else {
+            logger.warning("Task with ID " + id + " not found.");
+            throw new TaskNotFoundException("Task not found for ID: " + id); // Throw exception if task not found
+        }
     }
 
     // Create a new task
