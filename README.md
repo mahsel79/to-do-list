@@ -22,23 +22,25 @@ The goal of this project is to create a lightweight task management system that 
 - Interact with the backend through HTTP API calls.
 - Perform CRUD (Create, Read, Update, Delete) operations on tasks using JSON-based endpoints.
 
-The project uses an in-memory data store to manage tasks during runtime, ensuring fast and efficient operations without requiring a database setup.
-
+The project uses an in-memory data store backed by a `tasks.json` file for persistence, ensuring fast and efficient operations without requiring a database setup. Real-time synchronization between the GUI and the backend ensures consistency.
 ---
 
 ### **Features**
 1. **GUI-based Task Management**:
-    - Create, view, update, and delete tasks with a JavaFX interface.
+   - Create, view, update, and delete tasks with a JavaFX interface.
+   - Auto-refreshes the UI after modifications.
 2. **JSON API for Task Operations**:
-    - Perform CRUD operations through RESTful HTTP endpoints.
+   - Perform CRUD operations through RESTful HTTP endpoints.
 3. **Task ID Management**:
-    - Automatically update task IDs to maintain sequential order after deletions.
+   - Automatically update task IDs to maintain sequential order after deletions.
 4. **Real-Time Sync**:
-    - GUI interacts with the backend through API calls to ensure consistency.
+   - GUI interacts with the backend through API calls to ensure consistency.
 5. **Lightweight HTTP Server**:
-    - Built-in HTTP server for API requests, eliminating the need for external web servers.
-6. **Logging**:
-    - Detailed logs for operations, errors, and server activity.
+   - Built-in HTTP server for API requests, eliminating the need for external web servers.
+6. **Persistence**:
+   - Tasks are stored in a `tasks.json` file for persistence across application restarts.
+7. **Logging**:
+   - Detailed logs for operations, errors, and server activity.
 
 ---
 
@@ -53,7 +55,7 @@ The project uses an in-memory data store to manage tasks during runtime, ensurin
 - **java.util**: Utilities like collections, optional, and logging.
 - **java.util.logging**: Implements logging for debugging and operational tracking.
 - **java.net.http**: Handles HTTP request processing.
-- **com.fasterxml.jackson**: For JSON serialization and deserialization (optional).
+- **com.fasterxml.jackson**: For JSON serialization and deserialization.
 
 ---
 
@@ -64,30 +66,30 @@ The project is structured for clarity and scalability:
 ```
 to-do-list/
 ├── src/
-│   ├── main/
-│   │   ├── java/
-│   │   │   ├── com/
-│   │   │   │   ├── grit/
-│   │   │   │   │   ├── backend/         // Backend logic and HTTP server
-│   │   │   │   │   │   ├── controller/  // Task API endpoints
-│   │   │   │   │   │   │   ├── TaskController.java
-│   │   │   │   │   │   ├── model/       // Task entity
-│   │   │   │   │   │   │   ├── Task.java
-│   │   │   │   │   │   ├── service/     // Task services
-│   │   │   │   │   │   │   ├── TaskService.java
-│   │   │   │   │   │   │   ├── InMemoryTaskService.java
-│   │   │   │   │   │   ├── server/      // HTTP server setup
-│   │   │   │   │   │   │   ├── HttpServer.java
-│   │   │   │   │   ├── frontend/        // Frontend GUI and logic
-│   │   │   │   │   │   ├── controller/  // GUI controllers
-│   │   │   │   │   │   │   ├── ToDoController.java
-│   │   │   │   │   │   ├── model/       // GUI task entity
-│   │   │   │   │   │   │   ├── Task.java
-│   │   │   │   │   │   ├── MainApp.java // Main application entry point
-│   │   │   │   │   ├── util/            // Logger utilities
-│   │   │   │   │   │   ├── LoggerUtil.java
-├── README.md                            // Project description and instructions
-                    // Project description and instructions
+│ ├── main/
+│ │ ├── java/
+│ │ │ ├── com/
+│ │ │ │ ├── grit/
+│ │ │ │ │ ├── backend/ // Backend logic and HTTP server
+│ │ │ │ │ │ ├── controller/ // Task API endpoints
+│ │ │ │ │ │ │ ├── TaskController.java
+│ │ │ │ │ │ ├── model/ // Task entity
+│ │ │ │ │ │ │ ├── Task.java
+│ │ │ │ │ │ ├── service/ // Task services
+│ │ │ │ │ │ │ ├── TaskService.java
+│ │ │ │ │ │ │ ├── InMemoryTaskService.java
+│ │ │ │ │ │ ├── server/ // HTTP server setup
+│ │ │ │ │ │ │ ├── HttpServer.java
+│ │ │ │ ├── frontend/ // Frontend GUI and logic
+│ │ │ │ │ ├── controller/ // GUI controllers
+│ │ │ │ │ │ ├── ToDoController.java
+│ │ │ │ │ ├── model/ // GUI task entity
+│ │ │ │ │ │ ├── Task.java
+│ │ │ │ │ ├── MainApp.java // Main application entry point
+│ │ │ │ ├── util/ // Logger utilities
+│ │ │ │ │ ├── LoggerUtil.java
+├── tasks.json // File for task persistence
+├── README.md // Project description and instructions
 ```
 
 ---
