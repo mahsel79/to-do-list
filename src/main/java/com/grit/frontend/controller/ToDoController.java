@@ -6,6 +6,7 @@ import com.grit.backend.service.InMemoryTaskService;
 import com.grit.backend.service.TaskService;
 import com.grit.model.Task;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 
@@ -32,6 +33,7 @@ public class ToDoController {
 
     private final TaskController taskController;
     private Task selectedTask;
+    private final ObservableList<Task> tasks = FXCollections.observableArrayList();
 
     public ToDoController() {
         TaskService taskService = new InMemoryTaskService(new InMemoryTaskRepository());
@@ -45,6 +47,10 @@ public class ToDoController {
         descriptionColumn.setCellValueFactory(cellData -> cellData.getValue().descriptionProperty());
         completedColumn.setCellValueFactory(cellData -> cellData.getValue().completedProperty().asObject());
 
+        // Bind the TableView to the observable list
+        taskTableView.setItems(tasks);
+
+        // Listen for selection changes in TableView
         taskTableView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             selectedTask = newValue;
             if (newValue != null) {
@@ -56,10 +62,10 @@ public class ToDoController {
     }
 
     private void loadTasksFromBackend() {
-        List<Task> tasks = taskController.getAllTasks();
-        if (tasks != null && !tasks.isEmpty()) {
-            taskTableView.setItems(FXCollections.observableArrayList(tasks));
-            LOGGER.info("Loaded " + tasks.size() + " tasks.");
+        List<Task> taskList = taskController.getAllTasks();
+        if (taskList != null && !taskList.isEmpty()) {
+            tasks.setAll(taskList); // Update the observable list
+            LOGGER.info("Loaded " + taskList.size() + " tasks.");
         } else {
             LOGGER.warning("No tasks available.");
         }
@@ -75,7 +81,7 @@ public class ToDoController {
 
         boolean isCompleted = checkBox.isSelected();
         taskController.createTask(description, isCompleted);
-        loadTasksFromBackend();
+        loadTasksFromBackend(); // Refresh the task list
         clearForm();
     }
 
@@ -104,7 +110,7 @@ public class ToDoController {
         }
 
         taskController.updateTask(selectedTask.getId(), description, checkBox.isSelected());
-        loadTasksFromBackend();
+        loadTasksFromBackend(); // Refresh the task list
         clearForm();
     }
 
@@ -115,11 +121,12 @@ public class ToDoController {
             return;
         }
 
+        // Confirm with the user before deletion
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Are you sure you want to delete the selected task?", ButtonType.YES, ButtonType.NO);
         alert.showAndWait().ifPresent(response -> {
             if (response == ButtonType.YES) {
                 taskController.deleteTask(selectedTask.getId());
-                loadTasksFromBackend();
+                loadTasksFromBackend(); // Refresh the task list
             }
         });
     }

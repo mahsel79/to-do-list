@@ -7,11 +7,7 @@ import com.grit.model.Task;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.InputStreamReader;
-import java.io.BufferedReader;
+import java.io.*;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -64,6 +60,8 @@ public class HttpRequestHandler implements HttpHandler {
             try (OutputStream os = exchange.getResponseBody()) {
                 os.write(response.getBytes());
             }
+        } finally {
+            exchange.close(); // Close the exchange after handling the request
         }
     }
 
@@ -123,11 +121,15 @@ public class HttpRequestHandler implements HttpHandler {
 
     private void handleDeleteRequest(HttpExchange exchange, int taskId) throws IOException {
         boolean isDeleted = taskController.deleteTask(taskId);
-        String response = HttpResponse.createJsonResponse(isDeleted ? "Task deleted" : "Task not found", isDeleted ? 204 : 404);
-        exchange.getResponseHeaders().set("Content-Type", "application/json");
-        exchange.sendResponseHeaders(isDeleted ? 204 : 404, response.getBytes().length);
-        try (OutputStream os = exchange.getResponseBody()) {
-            os.write(response.getBytes());
+        if (isDeleted) {
+            exchange.sendResponseHeaders(204, -1); // No content for successful delete
+        } else {
+            String response = HttpResponse.createJsonResponse("Task not found", 404);
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            exchange.sendResponseHeaders(404, response.getBytes().length);
+            try (OutputStream os = exchange.getResponseBody()) {
+                os.write(response.getBytes());
+            }
         }
     }
 

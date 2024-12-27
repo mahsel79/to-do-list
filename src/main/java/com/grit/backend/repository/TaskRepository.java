@@ -3,6 +3,7 @@ package com.grit.backend.repository;
 import java.util.List;
 import java.util.Optional;
 import com.grit.model.Task;
+
 public interface TaskRepository {
     List<Task> findAll(); // Retrieve all tasks
     Optional<Task> findById(int id); // Find a task by its ID

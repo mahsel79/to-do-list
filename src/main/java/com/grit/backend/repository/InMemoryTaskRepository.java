@@ -5,10 +5,9 @@ import com.grit.frontend.util.JsonUtil;
 import com.grit.model.Task;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -20,7 +19,7 @@ public class InMemoryTaskRepository implements TaskRepository {
     private final Map<Integer, Task> taskMap = new ConcurrentHashMap<>();
     private final AtomicInteger idCounter = new AtomicInteger(1);
 
-    // Path to the JSON file in the resources folder
+    // Path to the tasks.json file in the same folder as MainApp.java
     private static final String JSON_FILE_PATH = "tasks.json";
 
     public InMemoryTaskRepository() {
@@ -43,7 +42,7 @@ public class InMemoryTaskRepository implements TaskRepository {
             task.setId(getNextId()); // Auto-generate ID for new tasks
         }
         taskMap.put(task.getId(), task);
-        saveToJsonFile();
+        saveToJsonFile(); // Save to JSON file
         return task;
     }
 
@@ -53,7 +52,7 @@ public class InMemoryTaskRepository implements TaskRepository {
             throw new IllegalArgumentException("Task not found for update");
         }
         taskMap.put(task.getId(), task);
-        saveToJsonFile();
+        saveToJsonFile(); // Save to JSON file
         return task;
     }
 
@@ -61,21 +60,25 @@ public class InMemoryTaskRepository implements TaskRepository {
     public synchronized boolean deleteById(int id) {
         boolean removed = taskMap.remove(id) != null;
         if (removed) {
-            saveToJsonFile();
+            saveToJsonFile(); // Save to JSON file
         }
         return removed;
     }
 
     // Load tasks from JSON file
     private void loadDemoTasksFromJson() {
-        InputStream inputStream = getClass().getClassLoader().getResourceAsStream(JSON_FILE_PATH);
-        if (inputStream == null) {
-            LOGGER.warning("JSON file not found in resources: " + JSON_FILE_PATH);
-            return;  // Proceed with an empty taskMap if the file doesn't exist
+        Path path = Paths.get(JSON_FILE_PATH);
+        LOGGER.info("Attempting to load tasks from JSON file: " + path.toAbsolutePath());
+
+        if (!Files.exists(path)) {
+            LOGGER.warning("JSON file not found: " + path.toAbsolutePath());
+            return; // Proceed with an empty taskMap if the file doesn't exist
         }
 
         try {
-            String json = new String(inputStream.readAllBytes());
+            String json = Files.readString(path);
+            LOGGER.info("JSON content loaded: " + json);
+
             List<Task> tasks = JsonUtil.fromJson(json, new TypeReference<>() {});
             if (tasks != null && !tasks.isEmpty()) {
                 for (Task task : tasks) {
@@ -87,7 +90,7 @@ public class InMemoryTaskRepository implements TaskRepository {
                 LOGGER.warning("No tasks found in the JSON file.");
             }
         } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "Error reading JSON file: " + JSON_FILE_PATH, e);
+            LOGGER.log(Level.SEVERE, "Error reading JSON file: " + path.toAbsolutePath(), e);
         }
     }
 
@@ -100,11 +103,15 @@ public class InMemoryTaskRepository implements TaskRepository {
     // Save all tasks to the JSON file
     private void saveToJsonFile() {
         try {
+            Path path = Paths.get(JSON_FILE_PATH);
+            LOGGER.info("Attempting to save tasks to JSON file: " + path.toAbsolutePath());
+
             String json = JsonUtil.toJson(findAll());
-            Path path = Path.of(getClass().getClassLoader().getResource(JSON_FILE_PATH).toURI());
+            LOGGER.info("JSON content to save: " + json);
+
             Files.write(path, json.getBytes());
-            LOGGER.info("Tasks saved to JSON file.");
-        } catch (IOException | URISyntaxException e) {
+            LOGGER.info("Tasks successfully saved to JSON file.");
+        } catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Error saving tasks to JSON file.", e);
         }
     }
