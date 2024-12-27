@@ -8,71 +8,79 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class InMemoryTaskRepository implements TaskRepository {
     private static final Logger LOGGER = Logger.getLogger(InMemoryTaskRepository.class.getName());
-    private final Map<Integer, Task> taskMap = new ConcurrentHashMap<>();
     private final AtomicInteger idCounter = new AtomicInteger(1);
 
-    // Path to the tasks.json file in the same folder as MainApp.java
-    private static final String JSON_FILE_PATH = "tasks.json";
+    // Path to the tasks.json file in the root project directory
+    private static final String JSON_FILE_PATH = System.getProperty("user.dir") + "/tasks.json";
 
     public InMemoryTaskRepository() {
-        loadDemoTasksFromJson(); // Load demo tasks when the repository is initialized
+        initializeIdCounter(); // Initialize the ID counter based on the tasks in the file
     }
 
     @Override
     public List<Task> findAll() {
-        return new ArrayList<>(taskMap.values());
+        return loadTasksFromJson(); // Always load tasks directly from the file
     }
 
     @Override
     public Optional<Task> findById(int id) {
-        return Optional.ofNullable(taskMap.get(id));
+        List<Task> tasks = loadTasksFromJson();
+        return tasks.stream().filter(task -> task.getId() == id).findFirst();
     }
 
     @Override
     public synchronized Task save(Task task) {
+        List<Task> tasks = loadTasksFromJson();
         if (task.getId() == 0) {
             task.setId(getNextId()); // Auto-generate ID for new tasks
         }
-        taskMap.put(task.getId(), task);
-        saveToJsonFile(); // Save to JSON file
+        tasks.add(task);
+        saveToJsonFile(tasks); // Save the updated list to the file
         return task;
     }
 
     @Override
     public synchronized Task update(Task task) {
-        if (!taskMap.containsKey(task.getId())) {
+        List<Task> tasks = loadTasksFromJson();
+        Optional<Task> existingTask = tasks.stream().filter(t -> t.getId() == task.getId()).findFirst();
+        if (existingTask.isPresent()) {
+            Task updatedTask = existingTask.get();
+            updatedTask.setDescription(task.getDescription());
+            updatedTask.setCompleted(task.isCompleted());
+            saveToJsonFile(tasks); // Save the updated list to the file
+            return updatedTask;
+        } else {
             throw new IllegalArgumentException("Task not found for update");
         }
-        taskMap.put(task.getId(), task);
-        saveToJsonFile(); // Save to JSON file
-        return task;
     }
 
     @Override
     public synchronized boolean deleteById(int id) {
-        boolean removed = taskMap.remove(id) != null;
+        List<Task> tasks = loadTasksFromJson();
+        boolean removed = tasks.removeIf(task -> task.getId() == id);
         if (removed) {
-            saveToJsonFile(); // Save to JSON file
+            saveToJsonFile(tasks); // Save the updated list to the file
         }
         return removed;
     }
 
     // Load tasks from JSON file
-    private void loadDemoTasksFromJson() {
+    private List<Task> loadTasksFromJson() {
         Path path = Paths.get(JSON_FILE_PATH);
         LOGGER.info("Attempting to load tasks from JSON file: " + path.toAbsolutePath());
 
         if (!Files.exists(path)) {
             LOGGER.warning("JSON file not found: " + path.toAbsolutePath());
-            return; // Proceed with an empty taskMap if the file doesn't exist
+            return new ArrayList<>(); // Return an empty list if the file doesn't exist
         }
 
         try {
@@ -80,33 +88,26 @@ public class InMemoryTaskRepository implements TaskRepository {
             LOGGER.info("JSON content loaded: " + json);
 
             List<Task> tasks = JsonUtil.fromJson(json, new TypeReference<>() {});
-            if (tasks != null && !tasks.isEmpty()) {
-                for (Task task : tasks) {
-                    taskMap.put(task.getId(), task);
-                    idCounter.updateAndGet(current -> Math.max(current, task.getId() + 1));
-                }
+            if (tasks != null) {
                 LOGGER.info("Loaded " + tasks.size() + " tasks from JSON file.");
+                return tasks;
             } else {
                 LOGGER.warning("No tasks found in the JSON file.");
+                return new ArrayList<>();
             }
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Error reading JSON file: " + path.toAbsolutePath(), e);
+            return new ArrayList<>();
         }
     }
 
-    // Get the next available ID
-    @Override
-    public int getNextId() {
-        return idCounter.getAndIncrement();
-    }
-
     // Save all tasks to the JSON file
-    private void saveToJsonFile() {
+    private void saveToJsonFile(List<Task> tasks) {
         try {
             Path path = Paths.get(JSON_FILE_PATH);
             LOGGER.info("Attempting to save tasks to JSON file: " + path.toAbsolutePath());
 
-            String json = JsonUtil.toJson(findAll());
+            String json = JsonUtil.toJson(tasks);
             LOGGER.info("JSON content to save: " + json);
 
             Files.write(path, json.getBytes());
@@ -114,5 +115,18 @@ public class InMemoryTaskRepository implements TaskRepository {
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Error saving tasks to JSON file.", e);
         }
+    }
+
+    // Initialize the ID counter based on the tasks in the file
+    private void initializeIdCounter() {
+        List<Task> tasks = loadTasksFromJson();
+        int maxId = tasks.stream().mapToInt(Task::getId).max().orElse(0);
+        idCounter.set(maxId + 1);
+    }
+
+    // Get the next available ID
+    @Override
+    public int getNextId() {
+        return idCounter.getAndIncrement();
     }
 }

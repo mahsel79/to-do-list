@@ -5,10 +5,13 @@ import com.grit.backend.repository.InMemoryTaskRepository;
 import com.grit.backend.service.InMemoryTaskService;
 import com.grit.backend.service.TaskService;
 import com.grit.model.Task;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.util.Duration;
 
 import java.util.List;
 import java.util.logging.Logger;
@@ -58,7 +61,16 @@ public class ToDoController {
             }
         });
 
+        // Load tasks initially
         loadTasksFromBackend();
+
+        // Set up auto-refresh every 5 seconds
+        Timeline timeline = new Timeline(new KeyFrame(Duration.seconds(10), event -> {
+            LOGGER.info("Auto-refreshing tasks...");
+            loadTasksFromBackend();
+        }));
+        timeline.setCycleCount(Timeline.INDEFINITE); // Repeat indefinitely
+        timeline.play();
     }
 
     private void loadTasksFromBackend() {

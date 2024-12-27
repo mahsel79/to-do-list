@@ -18,7 +18,7 @@ public class InMemoryTaskService extends TaskService {
     @Override
     public List<Task> getAllTasks() {
         logger.info("Fetching all tasks from repository");
-        return taskRepository.findAll();
+        return taskRepository.findAll(); // Always fetch the latest tasks
     }
 
     @Override

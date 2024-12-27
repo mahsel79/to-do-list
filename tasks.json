@@ -1,13 +1,13 @@
 [ {
   "id" : 1,
-  "description" : "Finish JavaFX tutorial",
-  "completed" : false
+  "description" : "Complete JavaFX project",
+  "completed" : true
 }, {
   "id" : 2,
-  "description" : "Buy groceries",
-  "completed" : false
-}, {
-  "id" : 3,
-  "description" : "Walk the dog",
+  "description" : "Write report",
   "completed" : true
+}, {
+  "id" : 4,
+  "description" : "Record a vido",
+  "completed" : false
 } ]

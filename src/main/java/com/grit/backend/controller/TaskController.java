@@ -19,7 +19,7 @@ public class TaskController {
 
     public List<Task> getAllTasks() {
         LOGGER.info("Fetching all tasks...");
-        return taskService.getAllTasks();
+        return taskService.getAllTasks(); // Always fetch the latest tasks
     }
 
     public Task getTaskById(int id) {

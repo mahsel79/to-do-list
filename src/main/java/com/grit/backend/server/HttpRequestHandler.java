@@ -66,7 +66,8 @@ public class HttpRequestHandler implements HttpHandler {
     }
 
     private void handleGetRequest(HttpExchange exchange) throws IOException {
-        List<Task> tasks = taskController.getAllTasks();
+        LOGGER.info("Fetching all tasks...");
+        List<Task> tasks = taskController.getAllTasks(); // Always fetch the latest tasks
         String response = objectMapper.writeValueAsString(tasks);
         exchange.getResponseHeaders().set("Content-Type", "application/json");
         exchange.sendResponseHeaders(200, response.getBytes().length);
@@ -76,6 +77,7 @@ public class HttpRequestHandler implements HttpHandler {
     }
 
     private void handleGetTaskByIdRequest(HttpExchange exchange, int taskId) throws IOException {
+        LOGGER.info("Fetching task with ID: " + taskId);
         try {
             Task task = taskController.getTaskById(taskId);
             String response = objectMapper.writeValueAsString(task);
@@ -85,6 +87,7 @@ public class HttpRequestHandler implements HttpHandler {
                 os.write(response.getBytes());
             }
         } catch (TaskNotFoundException e) {
+            LOGGER.warning("Task with ID " + taskId + " not found.");
             String response = HttpResponse.createJsonResponse("Task not found", 404);
             exchange.getResponseHeaders().set("Content-Type", "application/json");
             exchange.sendResponseHeaders(404, response.getBytes().length);
@@ -97,6 +100,7 @@ public class HttpRequestHandler implements HttpHandler {
     private void handlePostRequest(HttpExchange exchange) throws IOException {
         String requestBody = readRequestBody(exchange);
         Task task = objectMapper.readValue(requestBody, Task.class);
+        LOGGER.info("Creating new task: " + task.getDescription());
         Task createdTask = taskController.createTask(task.getDescription(), task.isCompleted());
         String response = objectMapper.writeValueAsString(createdTask);
         exchange.getResponseHeaders().set("Content-Type", "application/json");
@@ -109,7 +113,7 @@ public class HttpRequestHandler implements HttpHandler {
     private void handlePutRequest(HttpExchange exchange, int taskId) throws IOException {
         String requestBody = readRequestBody(exchange);
         Task task = objectMapper.readValue(requestBody, Task.class);
-        task.setId(taskId);
+        LOGGER.info("Updating task with ID: " + taskId);
         Task updatedTask = taskController.updateTask(taskId, task.getDescription(), task.isCompleted());
         String response = objectMapper.writeValueAsString(updatedTask);
         exchange.getResponseHeaders().set("Content-Type", "application/json");
@@ -120,10 +124,12 @@ public class HttpRequestHandler implements HttpHandler {
     }
 
     private void handleDeleteRequest(HttpExchange exchange, int taskId) throws IOException {
+        LOGGER.info("Deleting task with ID: " + taskId);
         boolean isDeleted = taskController.deleteTask(taskId);
         if (isDeleted) {
             exchange.sendResponseHeaders(204, -1); // No content for successful delete
         } else {
+            LOGGER.warning("Task with ID " + taskId + " not found.");
             String response = HttpResponse.createJsonResponse("Task not found", 404);
             exchange.getResponseHeaders().set("Content-Type", "application/json");
             exchange.sendResponseHeaders(404, response.getBytes().length);
