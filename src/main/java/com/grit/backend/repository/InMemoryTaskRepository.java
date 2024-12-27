@@ -21,7 +21,7 @@ public class InMemoryTaskRepository implements TaskRepository {
     private final AtomicInteger idCounter = new AtomicInteger(1);
 
     // Path to the JSON file in the resources folder
-    private static final String JSON_FILE_PATH = "tasks.json";  // Updated path
+    private static final String JSON_FILE_PATH = "tasks.json";
 
     public InMemoryTaskRepository() {
         loadDemoTasksFromJson(); // Load demo tasks when the repository is initialized
@@ -38,7 +38,7 @@ public class InMemoryTaskRepository implements TaskRepository {
     }
 
     @Override
-    public Task save(Task task) {
+    public synchronized Task save(Task task) {
         if (task.getId() == 0) {
             task.setId(getNextId()); // Auto-generate ID for new tasks
         }
@@ -48,7 +48,7 @@ public class InMemoryTaskRepository implements TaskRepository {
     }
 
     @Override
-    public Task update(Task task) {
+    public synchronized Task update(Task task) {
         if (!taskMap.containsKey(task.getId())) {
             throw new IllegalArgumentException("Task not found for update");
         }
@@ -58,10 +58,9 @@ public class InMemoryTaskRepository implements TaskRepository {
     }
 
     @Override
-    public boolean deleteById(int id) {
+    public synchronized boolean deleteById(int id) {
         boolean removed = taskMap.remove(id) != null;
         if (removed) {
-            // Optionally, you can adjust the idCounter here if you want to reuse IDs
             saveToJsonFile();
         }
         return removed;
@@ -72,7 +71,6 @@ public class InMemoryTaskRepository implements TaskRepository {
         InputStream inputStream = getClass().getClassLoader().getResourceAsStream(JSON_FILE_PATH);
         if (inputStream == null) {
             LOGGER.warning("JSON file not found in resources: " + JSON_FILE_PATH);
-            LOGGER.warning("Looking in: " + getClass().getClassLoader().getResource(JSON_FILE_PATH));
             return;  // Proceed with an empty taskMap if the file doesn't exist
         }
 
@@ -81,8 +79,7 @@ public class InMemoryTaskRepository implements TaskRepository {
             List<Task> tasks = JsonUtil.fromJson(json, new TypeReference<>() {});
             if (tasks != null && !tasks.isEmpty()) {
                 for (Task task : tasks) {
-                    taskMap.put(task.getId(), task);  // Directly populate the taskMap
-                    // Update idCounter if the task ID is greater than the current counter
+                    taskMap.put(task.getId(), task);
                     idCounter.updateAndGet(current -> Math.max(current, task.getId() + 1));
                 }
                 LOGGER.info("Loaded " + tasks.size() + " tasks from JSON file.");
@@ -95,8 +92,9 @@ public class InMemoryTaskRepository implements TaskRepository {
     }
 
     // Get the next available ID
-    private int getNextId() {
-        return idCounter.getAndIncrement(); // Increment and return the next ID
+    @Override
+    public int getNextId() {
+        return idCounter.getAndIncrement();
     }
 
     // Save all tasks to the JSON file

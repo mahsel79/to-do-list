@@ -52,8 +52,8 @@ public class MainApp extends Application {
 
     private void startHttpServer() {
         try {
-            server = new TaskHttpServer(); // Initialize the HTTP server
-            server.start();  // Start the server
+            server = new TaskHttpServer();
+            server.start();
             logger.info("HTTP server started successfully.");
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Failed to start the HTTP server", e);
@@ -63,9 +63,9 @@ public class MainApp extends Application {
 
     private void shutdownApplication(String reason) {
         logger.warning("Shutting down application due to error: " + reason);
-        stopServer(); // Stop the HTTP server
-        Platform.exit(); // Close the JavaFX application
-        System.exit(1); // Terminate with error code
+        stopServer();
+        Platform.exit();
+        System.exit(1);
     }
 
     private void stopServer() {

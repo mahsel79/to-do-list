@@ -11,13 +11,12 @@ import java.util.logging.Logger;
 import com.grit.frontend.util.LoggerUtil;
 
 public class Task {
-    private static final Logger logger = LoggerUtil.getLogger(Task.class.getName()); // Logger instance
+    private static final Logger logger = LoggerUtil.getLogger(Task.class.getName());
 
-    private final IntegerProperty id;           // For JavaFX TableView binding
-    private final StringProperty description;   // For JavaFX TableView binding
-    private final BooleanProperty completed;    // For JavaFX TableView binding
+    private final IntegerProperty id;
+    private final StringProperty description;
+    private final BooleanProperty completed;
 
-    // Default constructor for Jackson deserialization
     public Task() {
         this.id = new SimpleIntegerProperty();
         this.description = new SimpleStringProperty();
@@ -25,7 +24,6 @@ public class Task {
         logger.info("Task object created using default constructor.");
     }
 
-    // Constructor with arguments
     public Task(int id, String description, boolean completed) {
         this.id = new SimpleIntegerProperty(id);
         this.description = new SimpleStringProperty(description);
@@ -33,7 +31,6 @@ public class Task {
         logger.info(() -> "Task created: ID=" + id + ", Description=" + description + ", Completed=" + completed);
     }
 
-    // JavaFX Property Accessors (used in TableView binding and frontend UI)
     public IntegerProperty idProperty() {
         return id;
     }
@@ -46,23 +43,21 @@ public class Task {
         return completed;
     }
 
-    // Getters (standard Java accessors)
-    @JsonProperty("id") // Add @JsonProperty for custom serialization
+    @JsonProperty("id")
     public int getId() {
         return id.get();
     }
 
-    @JsonProperty("description") // Add @JsonProperty for custom serialization
+    @JsonProperty("description")
     public String getDescription() {
         return description.get();
     }
 
-    @JsonProperty("completed") // Add @JsonProperty for custom serialization
+    @JsonProperty("completed")
     public boolean isCompleted() {
         return completed.get();
     }
 
-    // Setters (with logging)
     public void setId(int id) {
         this.id.set(id);
         logger.info("Setting ID to: " + id);
@@ -78,7 +73,6 @@ public class Task {
         logger.info("Setting Completed status to: " + completed);
     }
 
-    // Overriding toString for better logging and debugging
     @Override
     public String toString() {
         return "Task{" +

@@ -20,16 +20,14 @@ public class TaskHttpServer {
 
     public void start() {
         try {
-            // Create a task controller
             TaskRepository taskRepository = new InMemoryTaskRepository();
             TaskService taskService = new InMemoryTaskService(taskRepository);
-            TaskController taskController = new TaskController(taskService); // No need to pass ObjectMapper here
+            TaskController taskController = new TaskController(taskService);
 
-            // Create a new HttpServer
             server = HttpServer.create(new InetSocketAddress(PORT), 0);
             server.createContext("/tasks", new HttpRequestHandler(taskController));
 
-            server.setExecutor(null); // Use the default executor
+            server.setExecutor(null);
             server.start();
 
             LOGGER.info("Server started on port " + PORT);
@@ -40,7 +38,7 @@ public class TaskHttpServer {
 
     public void stop() {
         if (server != null) {
-            server.stop(0); // Stop the server gracefully
+            server.stop(0);
             LOGGER.info("Server stopped successfully.");
         }
     }

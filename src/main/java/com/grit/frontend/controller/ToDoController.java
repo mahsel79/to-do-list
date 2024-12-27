@@ -34,9 +34,8 @@ public class ToDoController {
     private Task selectedTask;
 
     public ToDoController() {
-        // Pass the TaskService instance to the TaskController constructor
         TaskService taskService = new InMemoryTaskService(new InMemoryTaskRepository());
-        this.taskController = new TaskController(taskService); // Provide the TaskService
+        this.taskController = new TaskController(taskService);
     }
 
     @FXML
@@ -46,7 +45,6 @@ public class ToDoController {
         descriptionColumn.setCellValueFactory(cellData -> cellData.getValue().descriptionProperty());
         completedColumn.setCellValueFactory(cellData -> cellData.getValue().completedProperty().asObject());
 
-        // Listen for selection changes in TableView
         taskTableView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             selectedTask = newValue;
             if (newValue != null) {
@@ -76,9 +74,7 @@ public class ToDoController {
         }
 
         boolean isCompleted = checkBox.isSelected();
-        // Generate a unique ID for the new task
-        int nextId = taskController.getNextTaskId();
-        taskController.createTask(description, isCompleted, nextId);  // Pass the ID
+        taskController.createTask(description, isCompleted);
         loadTasksFromBackend();
         clearForm();
     }
@@ -119,7 +115,6 @@ public class ToDoController {
             return;
         }
 
-        // Confirm with the user before deletion
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Are you sure you want to delete the selected task?", ButtonType.YES, ButtonType.NO);
         alert.showAndWait().ifPresent(response -> {
             if (response == ButtonType.YES) {

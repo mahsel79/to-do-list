@@ -32,33 +32,33 @@ public class TaskController {
         return task;
     }
 
-
-    public Task createTask(String description, boolean completed, int id) {
+    public Task createTask(String description, boolean completed) {
+        if (description == null || description.trim().isEmpty()) {
+            throw new IllegalArgumentException("Task description cannot be empty");
+        }
         LOGGER.info(() -> "Creating new task: " + description);
-        Task task = new Task(id, description, completed);
+        int nextId = taskService.getNextTaskId();
+        Task task = new Task(nextId, description, completed);
         return taskService.createTask(task);
     }
 
     public Task updateTask(int id, String description, boolean completed) {
         LOGGER.info(() -> "Updating task with ID: " + id);
-        Task task = getTaskById(id); // Retrieve existing task
-        if (description != null) {
-            task.setDescription(description);
+        try {
+            Task task = getTaskById(id); // Retrieve existing task
+            if (description != null) {
+                task.setDescription(description);
+            }
+            task.setCompleted(completed);
+            return taskService.updateTask(task);
+        } catch (TaskNotFoundException e) {
+            LOGGER.warning("Task with ID: " + id + " not found.");
+            throw e; // Re-throw the exception to be handled by the HTTP handler
         }
-        task.setCompleted(completed);
-        return taskService.updateTask(task);
     }
 
     public boolean deleteTask(int id) {
         LOGGER.info(() -> "Deleting task with ID: " + id);
         return taskService.deleteTask(id);
-    }
-
-    public int getNextTaskId() {
-        List<Task> tasks = taskService.getAllTasks();
-        if (tasks == null || tasks.isEmpty()) {
-            return 1;
-        }
-        return tasks.stream().mapToInt(Task::getId).max().orElse(0) + 1;
     }
 }

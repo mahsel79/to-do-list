@@ -5,13 +5,12 @@ module com.grit.frontend {
     requires com.dlsc.formsfx;
     requires java.logging;
     requires jdk.httpserver;
-    requires com.fasterxml.jackson.databind; // Added Jackson dependency
+    requires com.fasterxml.jackson.databind;
 
     opens com.grit.frontend to javafx.fxml;
     exports com.grit.frontend;
     exports com.grit.frontend.controller;
     opens com.grit.frontend.controller to javafx.fxml;
 
-    // Export the model package to Jackson
-    exports com.grit.model; // Add this line to allow Jackson to use it
+    exports com.grit.model;
 }
