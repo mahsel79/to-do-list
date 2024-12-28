@@ -16,12 +16,10 @@ This project is a Java-based To-Do List Management System that provides a graphi
 ---
 
 ### **Project Overview**
-
 The goal of this project is to create a lightweight task management system that can be operated via a GUI or RESTful APIs. Users can:
 - Manage tasks directly in the GUI.
 - Interact with the backend through HTTP API calls.
 - Perform CRUD (Create, Read, Update, Delete) operations on tasks using JSON-based endpoints.
-
 The project uses an in-memory data store backed by a `tasks.json` file for persistence, ensuring fast and efficient operations without requiring a database setup. Real-time synchronization between the GUI and the backend ensures consistency.
 
 ---
